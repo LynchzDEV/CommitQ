@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useSSE } from "@/hooks/useSSE";
-import { QueueItem } from "@/types/queue";
+import { useState, useEffect } from 'react';
+import { useSocket } from '@/hooks/useSocket';
+import { QueueItem } from '@/types/queue';
 
 export default function Home() {
   const {
@@ -11,22 +11,20 @@ export default function Home() {
     removeFromQueue,
     startTimer,
     stopTimer,
-  } = useSSE();
+  } = useSocket();
 
-  const [newQueueName, setNewQueueName] = useState("");
+  const [newQueueName, setNewQueueName] = useState('');
   const [timerDuration, setTimerDuration] = useState(30); // seconds
-  const [timers, setTimers] = useState<
-    Map<string, { remaining: number; total: number }>
-  >(new Map());
+  const [timers, setTimers] = useState<Map<string, { remaining: number; total: number }>>(new Map());
 
   // Handle timer countdown for UI
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimers((prev) => {
+      setTimers(prev => {
         const newTimers = new Map(prev);
         let hasChanges = false;
 
-        queueState.items.forEach((item) => {
+        queueState.items.forEach(item => {
           if (item.timerStarted && item.timerDuration) {
             const elapsed = Date.now() - new Date(item.timerStarted).getTime();
             const remaining = Math.max(0, item.timerDuration - elapsed);
@@ -34,7 +32,7 @@ export default function Home() {
             if (remaining > 0) {
               newTimers.set(item.id, {
                 remaining: Math.ceil(remaining / 1000),
-                total: Math.ceil(item.timerDuration / 1000),
+                total: Math.ceil(item.timerDuration / 1000)
               });
               hasChanges = true;
             } else {
@@ -51,31 +49,23 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [queueState.items]);
 
-  const handleAddQueue = async (e: React.FormEvent) => {
+  const handleAddQueue = (e: React.FormEvent) => {
     e.preventDefault();
     if (newQueueName.trim()) {
-      try {
-        await addToQueue(newQueueName.trim());
-        setNewQueueName("");
-      } catch (error) {
-        console.error("Failed to add to queue:", error);
-      }
+      addToQueue(newQueueName.trim());
+      setNewQueueName('');
     }
   };
 
-  const handleStartTimer = async (item: QueueItem) => {
+  const handleStartTimer = (item: QueueItem) => {
     const durationMs = timerDuration * 1000;
-    try {
-      await startTimer(item.id, durationMs);
-    } catch (error) {
-      console.error("Failed to start timer:", error);
-    }
+    startTimer(item.id, durationMs);
   };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getProgressPercentage = (remaining: number, total: number) => {
@@ -87,16 +77,18 @@ export default function Home() {
       <header className="header">
         <h1>Real-time Queue Manager</h1>
         <div className="connection-status">
-          <span
-            className={`status-indicator ${isConnected ? "connected" : "disconnected"}`}
-          >
-            {isConnected ? "🟢" : "🔴"}
+          <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
+            {isConnected ? '🟢' : '🔴'}
           </span>
-          {isConnected ? "Connected" : "Disconnected"}
+          {isConnected ? 'Connected' : 'Disconnected'}
         </div>
       </header>
 
-      {error && <div className="error-message">⚠️ {error}</div>}
+      {error && (
+        <div className="error-message">
+          ⚠️ {error}
+        </div>
+      )}
 
       <div className="main-content">
         <div className="add-queue-section">
@@ -109,11 +101,7 @@ export default function Home() {
               className="queue-input"
               maxLength={50}
             />
-            <button
-              type="submit"
-              disabled={!newQueueName.trim()}
-              className="add-button"
-            >
+            <button type="submit" disabled={!newQueueName.trim()} className="add-button">
               Add to Queue
             </button>
           </form>
@@ -144,13 +132,12 @@ export default function Home() {
               {queueState.items.map((item, index) => {
                 const timerInfo = timers.get(item.id);
                 const isFirst = index === 0;
-                const isCurrentlyServing =
-                  queueState.currentlyServing?.id === item.id;
+                const isCurrentlyServing = queueState.currentlyServing?.id === item.id;
 
                 return (
                   <div
                     key={item.id}
-                    className={`queue-item ${isFirst ? "first-item" : ""} ${isCurrentlyServing ? "currently-serving" : ""}`}
+                    className={`queue-item ${isFirst ? 'first-item' : ''} ${isCurrentlyServing ? 'currently-serving' : ''}`}
                   >
                     <div className="queue-item-content">
                       <div className="queue-item-info">
@@ -172,7 +159,7 @@ export default function Home() {
                             <div
                               className="progress-fill"
                               style={{
-                                width: `${getProgressPercentage(timerInfo.remaining, timerInfo.total)}%`,
+                                width: `${getProgressPercentage(timerInfo.remaining, timerInfo.total)}%`
                               }}
                             />
                           </div>
@@ -191,13 +178,7 @@ export default function Home() {
 
                         {timerInfo && (
                           <button
-                            onClick={async () => {
-                              try {
-                                await stopTimer(item.id);
-                              } catch (error) {
-                                console.error("Failed to stop timer:", error);
-                              }
-                            }}
+                            onClick={() => stopTimer(item.id)}
                             className="timer-button stop-timer"
                           >
                             Stop Timer
@@ -205,16 +186,7 @@ export default function Home() {
                         )}
 
                         <button
-                          onClick={async () => {
-                            try {
-                              await removeFromQueue(item.id);
-                            } catch (error) {
-                              console.error(
-                                "Failed to remove from queue:",
-                                error,
-                              );
-                            }
-                          }}
+                          onClick={() => removeFromQueue(item.id)}
                           className="remove-button"
                         >
                           Remove
@@ -232,15 +204,10 @@ export default function Home() {
           <div className="currently-serving">
             <h3>Currently Serving</h3>
             <div className="serving-item">
-              <span className="serving-name">
-                {queueState.currentlyServing.name}
-              </span>
+              <span className="serving-name">{queueState.currentlyServing.name}</span>
               {timers.get(queueState.currentlyServing.id) && (
                 <span className="serving-timer">
-                  ⏱️{" "}
-                  {formatTime(
-                    timers.get(queueState.currentlyServing.id)!.remaining,
-                  )}
+                  ⏱️ {formatTime(timers.get(queueState.currentlyServing.id)!.remaining)}
                 </span>
               )}
             </div>
@@ -253,8 +220,7 @@ export default function Home() {
           max-width: 800px;
           margin: 0 auto;
           padding: 20px;
-          font-family:
-            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .header {
@@ -289,19 +255,6 @@ export default function Home() {
           border-radius: 8px;
           margin-bottom: 20px;
           border: 1px solid #ffcdd2;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .error-close {
-          background: none;
-          border: none;
-          color: #c62828;
-          font-size: 20px;
-          cursor: pointer;
-          padding: 0;
-          margin-left: 12px;
         }
 
         .main-content {
@@ -333,12 +286,12 @@ export default function Home() {
 
         .queue-input:focus {
           outline: none;
-          border-color: #4caf50;
+          border-color: #4CAF50;
         }
 
         .add-button {
           padding: 12px 24px;
-          background: #4caf50;
+          background: #4CAF50;
           color: white;
           border: none;
           border-radius: 8px;
@@ -401,12 +354,12 @@ export default function Home() {
         }
 
         .queue-item.first-item {
-          border-color: #2196f3;
+          border-color: #2196F3;
           box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
         }
 
         .queue-item.currently-serving {
-          border-color: #ff9800;
+          border-color: #FF9800;
           background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
         }
 
@@ -422,7 +375,7 @@ export default function Home() {
         }
 
         .queue-position {
-          background: #2196f3;
+          background: #2196F3;
           color: white;
           padding: 8px 12px;
           border-radius: 20px;
@@ -432,7 +385,7 @@ export default function Home() {
         }
 
         .queue-item.currently-serving .queue-position {
-          background: #ff9800;
+          background: #FF9800;
         }
 
         .queue-name {
@@ -476,7 +429,7 @@ export default function Home() {
 
         .progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #4caf50, #8bc34a);
+          background: linear-gradient(90deg, #4CAF50, #8BC34A);
           transition: width 1s linear;
         }
 
@@ -496,7 +449,7 @@ export default function Home() {
         }
 
         .start-timer {
-          background: #4caf50;
+          background: #4CAF50;
           color: white;
         }
 
@@ -505,7 +458,7 @@ export default function Home() {
         }
 
         .stop-timer {
-          background: #ff9800;
+          background: #FF9800;
           color: white;
         }
 
@@ -532,7 +485,7 @@ export default function Home() {
           background: #fff3e0;
           padding: 20px;
           border-radius: 12px;
-          border: 2px solid #ff9800;
+          border: 2px solid #FF9800;
         }
 
         .currently-serving h3 {

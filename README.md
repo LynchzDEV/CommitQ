@@ -1,6 +1,6 @@
 # Real-time Queue Management System
 
-A real-time queue management system built with Next.js, TypeScript, and Server-Sent Events (SSE). This application allows multiple users to collaboratively manage a queue with real-time updates across all connected clients. **Optimized for Vercel deployment!**
+A real-time queue management system built with Next.js, TypeScript, and Socket.IO. This application allows multiple users to collaboratively manage a queue with real-time updates across all connected clients.
 
 ## Features
 
@@ -16,10 +16,9 @@ A real-time queue management system built with Next.js, TypeScript, and Server-S
 ## Technology Stack
 
 - **Frontend**: Next.js 14, React 18, TypeScript
-- **Real-time Communication**: Server-Sent Events (SSE)
+- **Real-time Communication**: Socket.IO
 - **Styling**: CSS-in-JS with styled-jsx
-- **State Management**: React hooks with SSE integration
-- **Deployment**: Optimized for Vercel serverless functions
+- **State Management**: React hooks with Socket.IO integration
 
 ## Getting Started
 
@@ -93,33 +92,32 @@ yarn start
 
 ## API Structure
 
-### API Structure
+### Socket.IO Events
 
-#### HTTP API Endpoints:
-- `POST /api/events` - Send actions to the server
-  - `queue:add` - Add a new item to the queue
-  - `queue:remove` - Remove an item from the queue
-  - `queue:start-timer` - Start a timer for the first queue item
-  - `queue:stop-timer` - Stop an active timer
-  - `queue:get-state` - Request current queue state
+#### Client to Server Events:
+- `queue:add` - Add a new item to the queue
+- `queue:remove` - Remove an item from the queue
+- `queue:start-timer` - Start a timer for the first queue item
+- `queue:stop-timer` - Stop an active timer
+- `queue:get-state` - Request current queue state
 
-#### Server-Sent Events:
-- `GET /api/events` - Subscribe to real-time updates
-  - `queue:updated` - Queue state has been updated
-  - `queue:item-added` - New item was added to the queue
-  - `queue:item-removed` - Item was removed from the queue
-  - `queue:timer-started` - Timer was started for an item
-  - `queue:timer-expired` - Timer has expired for an item
+#### Server to Client Events:
+- `queue:updated` - Queue state has been updated
+- `queue:item-added` - New item was added to the queue
+- `queue:item-removed` - Item was removed from the queue
+- `queue:timer-started` - Timer was started for an item
+- `queue:timer-expired` - Timer has expired for an item
+- `queue:error` - Error occurred during operation
 
 ## File Structure
 
 ```
 src/
 ├── hooks/
-│   └── useSSE.ts            # Server-Sent Events connection and queue management
+│   └── useSocket.ts          # Socket.IO connection and queue management
 ├── pages/
 │   ├── api/
-│   │   └── sse.ts           # SSE server implementation with HTTP actions
+│   │   └── socket.ts         # Socket.IO server implementation
 │   ├── _app.tsx             # Next.js app configuration
 │   ├── _document.tsx        # Next.js document configuration
 │   └── index.tsx            # Main queue management interface
@@ -129,19 +127,18 @@ src/
 
 ## Key Components
 
-### useRealtime Hook
+### useSocket Hook
 Custom React hook that manages:
-- Server-Sent Events connection
+- Socket.IO connection
 - Queue state management
 - Real-time event handling
 - Error handling
 
-### SSE Server
-- Handles real-time communication via Server-Sent Events
+### Socket.IO Server
+- Handles real-time communication
 - Manages in-memory queue state
 - Implements timer functionality
 - Broadcasts updates to all clients
-- **Vercel Compatible**: Works with serverless functions
 
 ### Queue Interface
 - Responsive UI for queue management
@@ -189,27 +186,12 @@ npm run lint
 - Edge (latest)
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
-## Vercel Deployment
-
-This application is specifically optimized for Vercel deployment:
-
-1. **Deploy to Vercel**:
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-2. **Environment**: No additional environment variables needed
-3. **Serverless Functions**: SSE endpoint works with Vercel's serverless architecture
-4. **Real-time**: Uses Server-Sent Events instead of WebSockets for Vercel compatibility
-
 ## Troubleshooting
 
 ### Connection Issues
 - Ensure the development server is running
-- Check browser console for SSE connection errors
+- Check browser console for WebSocket connection errors
 - Verify firewall settings aren't blocking connections
-- **Vercel**: SSE works better than WebSockets on Vercel's platform
 
 ### Timer Not Working
 - Only the first item in queue can have a timer
@@ -218,10 +200,8 @@ vercel --prod
 
 ### Real-time Updates Not Working
 - Check connection status indicator in the top-right corner
-- Refresh the page to re-establish SSE connection
-- **Vercel**: SSE automatically reconnects on connection loss
-- Verify the `/api/sse` endpoint is accessible
-- Connection automatically retries every 3 seconds on failure
+- Refresh the page to re-establish connection
+- Verify Socket.IO server is running properly
 
 ## License
 
