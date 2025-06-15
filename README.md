@@ -61,6 +61,84 @@ yarn build
 yarn start
 ```
 
+## Docker Deployment
+
+This application can be containerized using Docker for easy deployment and scalability.
+
+### Prerequisites
+
+- Docker installed on your system
+- Docker Compose (optional, for easier management)
+
+### Building the Docker Image
+
+Build the Docker image using the provided Dockerfile:
+
+```bash
+docker build -t commitq .
+```
+
+### Running with Docker
+
+Run the container:
+
+```bash
+docker run -p 3000:3000 commitq
+```
+
+The application will be available at `http://localhost:3000`.
+
+### Using Docker Compose
+
+For easier management, use the provided `docker-compose.yml`:
+
+```bash
+# Build and start the container
+docker-compose up --build
+
+# Run in detached mode
+docker-compose up -d
+
+# Stop the container
+docker-compose down
+```
+
+### Docker Features
+
+- **Multi-stage build**: Optimized image size using multi-stage Dockerfile
+- **Non-root user**: Runs as non-root user for security
+- **Health checks**: Built-in health monitoring via `/api/health` endpoint
+- **Production optimized**: Uses Next.js standalone output for minimal image size
+- **Environment variables**: Configurable via Docker environment variables
+
+### Environment Variables
+
+The following environment variables can be configured:
+
+- `NODE_ENV`: Set to `production` for production builds (default: production)
+- `PORT`: Port number for the application (default: 3000)
+- `HOSTNAME`: Hostname to bind to (default: 0.0.0.0)
+- `NEXT_TELEMETRY_DISABLED`: Disable Next.js telemetry (default: 1)
+
+Example with custom environment variables:
+
+```bash
+docker run -p 8080:8080 -e PORT=8080 -e NODE_ENV=production commitq
+```
+
+### Health Check
+
+The Docker container includes a health check endpoint at `/api/health` that returns:
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "uptime": 123.456,
+  "environment": "production"
+}
+```
+
 ## Usage
 
 ### Adding Items to Queue
