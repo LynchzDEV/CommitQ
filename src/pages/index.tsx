@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useSocket } from '@/hooks/useSocket';
-import { QueueItem } from '@/types/queue';
+import { useState, useEffect } from "react";
+import { useSocket } from "@/hooks/useSocket";
+import { QueueItem as QueueItemType } from "@/types/queue";
+import { Header } from "@/components/Header";
+import { AddQueueForm } from "@/components/AddQueueForm";
+import { QueueItem } from "@/components/QueueItem";
 
 export default function Home() {
   const {
@@ -13,18 +16,19 @@ export default function Home() {
     stopTimer,
   } = useSocket();
 
-  const [newQueueName, setNewQueueName] = useState('');
   const [timerDuration, setTimerDuration] = useState(30); // seconds
-  const [timers, setTimers] = useState<Map<string, { remaining: number; total: number }>>(new Map());
+  const [timers, setTimers] = useState<
+    Map<string, { remaining: number; total: number }>
+  >(new Map());
 
   // Handle timer countdown for UI
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimers(prev => {
+      setTimers((prev) => {
         const newTimers = new Map(prev);
         let hasChanges = false;
 
-        queueState.items.forEach(item => {
+        queueState.items.forEach((item) => {
           if (item.timerStarted && item.timerDuration) {
             const elapsed = Date.now() - new Date(item.timerStarted).getTime();
             const remaining = Math.max(0, item.timerDuration - elapsed);
@@ -32,7 +36,7 @@ export default function Home() {
             if (remaining > 0) {
               newTimers.set(item.id, {
                 remaining: Math.ceil(remaining / 1000),
-                total: Math.ceil(item.timerDuration / 1000)
+                total: Math.ceil(item.timerDuration / 1000),
               });
               hasChanges = true;
             } else {
@@ -49,15 +53,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [queueState.items]);
 
-  const handleAddQueue = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newQueueName.trim()) {
-      addToQueue(newQueueName.trim());
-      setNewQueueName('');
-    }
-  };
-
-  const handleStartTimer = (item: QueueItem) => {
+  const handleStartTimer = (item: QueueItemType) => {
     const durationMs = timerDuration * 1000;
     startTimer(item.id, durationMs);
   };
@@ -65,135 +61,66 @@ export default function Home() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getProgressPercentage = (remaining: number, total: number) => {
-    return ((total - remaining) / total) * 100;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1>Real-time Queue Manager</h1>
-        <div className="connection-status">
-          <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '🟢' : '🔴'}
-          </span>
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </div>
-      </header>
-
-      {error && (
-        <div className="error-message">
-          ⚠️ {error}
-        </div>
-      )}
+    <div className="app-container">
+      <Header isConnected={isConnected} error={error} />
 
       <div className="main-content">
-        <div className="add-queue-section">
-          <form onSubmit={handleAddQueue} className="add-queue-form">
-            <input
-              type="text"
-              value={newQueueName}
-              onChange={(e) => setNewQueueName(e.target.value)}
-              placeholder="Enter queue name..."
-              className="queue-input"
-              maxLength={50}
-            />
-            <button type="submit" disabled={!newQueueName.trim()} className="add-button">
-              Add to Queue
-            </button>
-          </form>
-
-          <div className="timer-settings">
-            <label htmlFor="timer-duration">Timer Duration (seconds):</label>
-            <input
-              id="timer-duration"
-              type="number"
-              min="5"
-              max="300"
-              value={timerDuration}
-              onChange={(e) => setTimerDuration(Number(e.target.value))}
-              className="timer-input"
-            />
-          </div>
-        </div>
+        <AddQueueForm
+          onAddToQueue={addToQueue}
+          timerDuration={timerDuration}
+          onTimerDurationChange={setTimerDuration}
+        />
 
         <div className="queue-section">
-          <h2>Current Queue ({queueState.items.length})</h2>
+          <div className="queue-header">
+            <h2 className="queue-title">
+              Current Queue
+              <span className="queue-count">({queueState.items.length})</span>
+            </h2>
+            {queueState.items.length > 0 && (
+              <div className="queue-stats">
+                <span className="stat">Next: #{1}</span>
+                {queueState.items.length > 1 && (
+                  <span className="stat">
+                    Waiting: {queueState.items.length - 1}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           {queueState.items.length === 0 ? (
-            <div className="empty-queue">
-              <p>No items in queue</p>
+            <div className="empty-queue fade-in">
+              <div className="empty-icon">📋</div>
+              <h3 className="empty-title">Queue is empty</h3>
+              <p className="empty-description">
+                Add your name above to join the queue
+              </p>
             </div>
           ) : (
             <div className="queue-list">
               {queueState.items.map((item, index) => {
                 const timerInfo = timers.get(item.id);
                 const isFirst = index === 0;
-                const isCurrentlyServing = queueState.currentlyServing?.id === item.id;
+                const isCurrentlyServing =
+                  queueState.currentlyServing?.id === item.id;
 
                 return (
-                  <div
+                  <QueueItem
                     key={item.id}
-                    className={`queue-item ${isFirst ? 'first-item' : ''} ${isCurrentlyServing ? 'currently-serving' : ''}`}
-                  >
-                    <div className="queue-item-content">
-                      <div className="queue-item-info">
-                        <div className="queue-position">#{index + 1}</div>
-                        <div className="queue-name">{item.name}</div>
-                        <div className="queue-time">
-                          Added: {new Date(item.addedAt).toLocaleTimeString()}
-                        </div>
-                      </div>
-
-                      {timerInfo && (
-                        <div className="timer-display">
-                          <div className="timer-info">
-                            <span className="timer-text">
-                              ⏱️ {formatTime(timerInfo.remaining)}
-                            </span>
-                          </div>
-                          <div className="progress-bar">
-                            <div
-                              className="progress-fill"
-                              style={{
-                                width: `${getProgressPercentage(timerInfo.remaining, timerInfo.total)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="queue-actions">
-                        {isFirst && !timerInfo && (
-                          <button
-                            onClick={() => handleStartTimer(item)}
-                            className="timer-button start-timer"
-                          >
-                            Start Timer
-                          </button>
-                        )}
-
-                        {timerInfo && (
-                          <button
-                            onClick={() => stopTimer(item.id)}
-                            className="timer-button stop-timer"
-                          >
-                            Stop Timer
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => removeFromQueue(item.id)}
-                          className="remove-button"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    item={item}
+                    index={index}
+                    isFirst={isFirst}
+                    isCurrentlyServing={isCurrentlyServing}
+                    timerInfo={timerInfo}
+                    onStartTimer={handleStartTimer}
+                    onStopTimer={stopTimer}
+                    onRemove={removeFromQueue}
+                  />
                 );
               })}
             </div>
@@ -201,344 +128,316 @@ export default function Home() {
         </div>
 
         {queueState.currentlyServing && (
-          <div className="currently-serving">
-            <h3>Currently Serving</h3>
-            <div className="serving-item">
-              <span className="serving-name">{queueState.currentlyServing.name}</span>
-              {timers.get(queueState.currentlyServing.id) && (
-                <span className="serving-timer">
-                  ⏱️ {formatTime(timers.get(queueState.currentlyServing.id)!.remaining)}
-                </span>
-              )}
+          <div className="currently-serving fade-in">
+            <div className="serving-header">
+              <h3 className="serving-title">
+                <span className="serving-icon">🎯</span>
+                Currently Serving
+              </h3>
+            </div>
+            <div className="serving-content">
+              <div className="serving-item">
+                <div className="serving-info">
+                  <span className="serving-name">
+                    {queueState.currentlyServing.name}
+                  </span>
+                  <span className="serving-time">
+                    Started:{" "}
+                    {new Date(
+                      queueState.currentlyServing.addedAt,
+                    ).toLocaleTimeString()}
+                  </span>
+                </div>
+                {timers.get(queueState.currentlyServing.id) && (
+                  <div className="serving-timer">
+                    <span className="timer-icon">⏱️</span>
+                    <span className="timer-time">
+                      {formatTime(
+                        timers.get(queueState.currentlyServing.id)!.remaining,
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
 
       <style jsx>{`
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #e0e0e0;
-        }
-
-        .header h1 {
-          margin: 0;
-          color: #333;
-        }
-
-        .connection-status {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 500;
-        }
-
-        .status-indicator {
-          font-size: 12px;
-        }
-
-        .error-message {
-          background: #ffebee;
-          color: #c62828;
-          padding: 12px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-          border: 1px solid #ffcdd2;
+        .app-container {
+          min-height: 100vh;
+          background: linear-gradient(
+            135deg,
+            var(--color-bg-secondary) 0%,
+            var(--color-accent-light) 100%
+          );
         }
 
         .main-content {
+          max-width: 900px;
+          margin: 0 auto;
+          padding: 0 20px 40px;
+        }
+
+        .queue-section {
+          margin-bottom: 32px;
+        }
+
+        .queue-header {
           display: flex;
-          flex-direction: column;
-          gap: 30px;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding: 20px 0;
+          border-bottom: 2px solid var(--color-border);
         }
 
-        .add-queue-section {
-          background: #f8f9fa;
-          padding: 24px;
-          border-radius: 12px;
-          border: 1px solid #e0e0e0;
-        }
-
-        .add-queue-form {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-
-        .queue-input {
-          flex: 1;
-          padding: 12px;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          font-size: 16px;
-        }
-
-        .queue-input:focus {
-          outline: none;
-          border-color: #4CAF50;
-        }
-
-        .add-button {
-          padding: 12px 24px;
-          background: #4CAF50;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          cursor: pointer;
-          font-weight: 500;
-        }
-
-        .add-button:hover:not(:disabled) {
-          background: #45a049;
-        }
-
-        .add-button:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-
-        .timer-settings {
+        .queue-title {
+          margin: 0;
+          color: var(--color-primary);
+          font-size: 1.75rem;
+          font-weight: 700;
+          font-family: var(--font-secondary);
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
         }
 
-        .timer-settings label {
-          font-weight: 500;
+        .queue-count {
+          background: var(--color-secondary);
+          color: var(--color-text-light);
+          padding: 4px 12px;
+          border-radius: 16px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          box-shadow: 0 2px 8px rgba(154, 181, 181, 0.3);
         }
 
-        .timer-input {
-          padding: 8px;
-          border: 2px solid #ddd;
-          border-radius: 6px;
-          width: 80px;
+        .queue-stats {
+          display: flex;
+          gap: 16px;
+          align-items: center;
         }
 
-        .queue-section h2 {
-          margin-bottom: 20px;
-          color: #333;
+        .stat {
+          background: var(--color-accent);
+          color: var(--color-text-primary);
+          padding: 6px 12px;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          border: 1px solid var(--color-border);
         }
 
         .empty-queue {
           text-align: center;
-          padding: 40px;
-          color: #666;
-          background: #f5f5f5;
-          border-radius: 8px;
+          padding: 60px 40px;
+          background: linear-gradient(
+            135deg,
+            var(--color-bg-primary) 0%,
+            var(--color-accent-light) 100%
+          );
+          border-radius: 16px;
+          border: 2px dashed var(--color-border);
+          box-shadow: 0 4px 16px rgba(65, 108, 109, 0.05);
+        }
+
+        .empty-icon {
+          font-size: 3rem;
+          margin-bottom: 16px;
+          opacity: 0.6;
+        }
+
+        .empty-title {
+          margin: 0 0 8px 0;
+          color: var(--color-text-primary);
+          font-size: 1.5rem;
+          font-weight: 600;
+          font-family: var(--font-secondary);
+        }
+
+        .empty-description {
+          margin: 0;
+          color: var(--color-text-secondary);
+          font-size: 1rem;
+          max-width: 300px;
+          margin: 0 auto;
         }
 
         .queue-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-        }
-
-        .queue-item {
-          background: white;
-          border: 2px solid #e0e0e0;
-          border-radius: 12px;
-          overflow: hidden;
-          transition: all 0.2s ease;
-        }
-
-        .queue-item.first-item {
-          border-color: #2196F3;
-          box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
-        }
-
-        .queue-item.currently-serving {
-          border-color: #FF9800;
-          background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
-        }
-
-        .queue-item-content {
-          padding: 20px;
-        }
-
-        .queue-item-info {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-
-        .queue-position {
-          background: #2196F3;
-          color: white;
-          padding: 8px 12px;
-          border-radius: 20px;
-          font-weight: bold;
-          min-width: 40px;
-          text-align: center;
-        }
-
-        .queue-item.currently-serving .queue-position {
-          background: #FF9800;
-        }
-
-        .queue-name {
-          font-size: 18px;
-          font-weight: 500;
-          flex: 1;
-        }
-
-        .queue-time {
-          color: #666;
-          font-size: 14px;
-        }
-
-        .timer-display {
-          margin-bottom: 16px;
-          padding: 12px;
-          background: #f0f8ff;
-          border-radius: 8px;
-          border: 1px solid #e3f2fd;
-        }
-
-        .timer-info {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 8px;
-        }
-
-        .timer-text {
-          font-size: 18px;
-          font-weight: bold;
-          color: #1976d2;
-        }
-
-        .progress-bar {
-          width: 100%;
-          height: 8px;
-          background: #e0e0e0;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #4CAF50, #8BC34A);
-          transition: width 1s linear;
-        }
-
-        .queue-actions {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-        }
-
-        .timer-button {
-          padding: 8px 16px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          cursor: pointer;
-          font-weight: 500;
-        }
-
-        .start-timer {
-          background: #4CAF50;
-          color: white;
-        }
-
-        .start-timer:hover {
-          background: #45a049;
-        }
-
-        .stop-timer {
-          background: #FF9800;
-          color: white;
-        }
-
-        .stop-timer:hover {
-          background: #f57c00;
-        }
-
-        .remove-button {
-          padding: 8px 16px;
-          background: #f44336;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          cursor: pointer;
-          font-weight: 500;
-        }
-
-        .remove-button:hover {
-          background: #d32f2f;
+          gap: 0;
         }
 
         .currently-serving {
-          background: #fff3e0;
-          padding: 20px;
-          border-radius: 12px;
-          border: 2px solid #FF9800;
+          background: linear-gradient(
+            135deg,
+            var(--color-accent-light) 0%,
+            var(--color-bg-primary) 100%
+          );
+          border: 2px solid var(--color-secondary);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 6px 20px rgba(154, 181, 181, 0.15);
         }
 
-        .currently-serving h3 {
-          margin: 0 0 12px 0;
-          color: #ef6c00;
+        .serving-header {
+          background: var(--color-secondary);
+          padding: 16px 24px;
+        }
+
+        .serving-title {
+          margin: 0;
+          color: var(--color-text-light);
+          font-size: 1.25rem;
+          font-weight: 700;
+          font-family: var(--font-secondary);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .serving-icon {
+          font-size: 1.1rem;
+        }
+
+        .serving-content {
+          padding: 24px;
         }
 
         .serving-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 16px;
+        }
+
+        .serving-info {
+          flex: 1;
         }
 
         .serving-name {
-          font-size: 18px;
+          display: block;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          font-family: var(--font-secondary);
+          margin-bottom: 4px;
+        }
+
+        .serving-time {
+          display: block;
+          font-size: 0.9rem;
+          color: var(--color-text-secondary);
           font-weight: 500;
         }
 
         .serving-timer {
-          font-size: 16px;
-          font-weight: bold;
-          color: #ef6c00;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--color-bg-primary);
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1px solid var(--color-border);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        @media (max-width: 600px) {
-          .container {
-            padding: 12px;
+        .timer-icon {
+          font-size: 1.2rem;
+        }
+
+        .timer-time {
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: var(--color-primary);
+          font-family: var(--font-secondary);
+        }
+
+        @media (max-width: 768px) {
+          .main-content {
+            padding: 0 16px 32px;
           }
 
-          .header {
-            flex-direction: column;
-            gap: 12px;
-            text-align: center;
-          }
-
-          .add-queue-form {
-            flex-direction: column;
-          }
-
-          .queue-item-info {
+          .queue-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 8px;
+            gap: 12px;
+            padding: 16px 0;
           }
 
-          .queue-actions {
-            justify-content: flex-start;
+          .queue-stats {
+            align-self: stretch;
+            justify-content: space-between;
+          }
+
+          .queue-title {
+            font-size: 1.5rem;
+          }
+
+          .empty-queue {
+            padding: 40px 20px;
+          }
+
+          .empty-icon {
+            font-size: 2.5rem;
+          }
+
+          .empty-title {
+            font-size: 1.25rem;
           }
 
           .serving-item {
             flex-direction: column;
             align-items: flex-start;
-            gap: 8px;
+            gap: 16px;
+          }
+
+          .serving-timer {
+            align-self: stretch;
+            justify-content: center;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .main-content {
+            padding: 0 12px 24px;
+          }
+
+          .queue-header {
+            padding: 12px 0;
+          }
+
+          .queue-title {
+            font-size: 1.25rem;
+          }
+
+          .queue-count {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+          }
+
+          .empty-queue {
+            padding: 32px 16px;
+          }
+
+          .serving-header {
+            padding: 12px 16px;
+          }
+
+          .serving-title {
+            font-size: 1.1rem;
+          }
+
+          .serving-content {
+            padding: 16px;
+          }
+
+          .serving-name {
+            font-size: 1.25rem;
           }
         }
       `}</style>
