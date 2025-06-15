@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['socket.io', 'socket.io-client'],
-  },
-}
+  // Configuration for Vercel deployment
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
