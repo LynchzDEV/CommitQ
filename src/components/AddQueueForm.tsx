@@ -1,23 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 interface AddQueueFormProps {
   onAddToQueue: (name: string) => void;
-  timerDuration: number;
-  onTimerDurationChange: (duration: number) => void;
 }
 
-export const AddQueueForm: React.FC<AddQueueFormProps> = ({
-  onAddToQueue,
-  timerDuration,
-  onTimerDurationChange,
-}) => {
-  const [newQueueName, setNewQueueName] = useState('');
+export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
+  const [newQueueName, setNewQueueName] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newQueueName.trim()) {
       onAddToQueue(newQueueName.trim());
-      setNewQueueName('');
+      setNewQueueName("");
     }
   };
 
@@ -47,41 +41,6 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
             </button>
           </div>
         </form>
-
-        <div className="timer-settings">
-          <div className="timer-setting-group">
-            <label htmlFor="timer-duration" className="timer-label">
-              Timer Duration
-            </label>
-            <div className="timer-input-group">
-              <input
-                id="timer-duration"
-                type="number"
-                min="5"
-                max="300"
-                value={timerDuration}
-                onChange={(e) => onTimerDurationChange(Number(e.target.value))}
-                className="timer-input"
-              />
-              <span className="timer-unit">seconds</span>
-            </div>
-          </div>
-          <div className="timer-presets">
-            <span className="presets-label">Quick set:</span>
-            <div className="preset-buttons">
-              {[30, 60, 120, 300].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => onTimerDurationChange(preset)}
-                  className={`preset-button ${timerDuration === preset ? 'active' : ''}`}
-                >
-                  {preset < 60 ? `${preset}s` : `${preset / 60}m`}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       <style jsx>{`
@@ -101,7 +60,7 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
         }
 
         .add-queue-section::before {
-          content: '';
+          content: "";
           position: absolute;
           top: 0;
           left: 0;
@@ -154,8 +113,9 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
         .queue-input:focus {
           outline: none;
           border-color: var(--color-primary);
-          box-shadow: 0 0 0 3px rgba(65, 108, 109, 0.1),
-                      inset 0 1px 3px rgba(0, 0, 0, 0.05);
+          box-shadow:
+            0 0 0 3px rgba(65, 108, 109, 0.1),
+            inset 0 1px 3px rgba(0, 0, 0, 0.05);
           transform: translateY(-1px);
         }
 
@@ -183,111 +143,6 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
           font-size: 14px;
         }
 
-        .timer-settings {
-          background: rgba(255, 255, 255, 0.6);
-          padding: 20px;
-          border-radius: 12px;
-          border: 1px solid var(--color-border-light);
-          backdrop-filter: blur(10px);
-          position: relative;
-          z-index: 1;
-        }
-
-        .timer-setting-group {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-
-        .timer-label {
-          font-weight: 600;
-          color: var(--color-text-primary);
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          min-width: 120px;
-        }
-
-        .timer-input-group {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .timer-input {
-          width: 80px;
-          padding: 8px 12px;
-          border: 2px solid var(--color-border);
-          border-radius: 8px;
-          text-align: center;
-          font-weight: 600;
-          background: var(--color-bg-primary);
-          color: var(--color-text-primary);
-          transition: all 0.2s ease;
-        }
-
-        .timer-input:focus {
-          outline: none;
-          border-color: var(--color-primary);
-          box-shadow: 0 0 0 2px rgba(65, 108, 109, 0.1);
-        }
-
-        .timer-unit {
-          font-size: 14px;
-          color: var(--color-text-secondary);
-          font-weight: 500;
-        }
-
-        .timer-presets {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .presets-label {
-          font-size: 14px;
-          color: var(--color-text-secondary);
-          font-weight: 500;
-          min-width: 80px;
-        }
-
-        .preset-buttons {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .preset-button {
-          padding: 6px 12px;
-          font-size: 12px;
-          font-weight: 600;
-          border: 1px solid var(--color-border);
-          border-radius: 6px;
-          background: var(--color-bg-primary);
-          color: var(--color-text-secondary);
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-
-        .preset-button:hover {
-          background: var(--color-accent);
-          border-color: var(--color-secondary);
-          color: var(--color-text-primary);
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(154, 181, 181, 0.2);
-        }
-
-        .preset-button.active {
-          background: var(--color-primary);
-          border-color: var(--color-primary);
-          color: var(--color-text-light);
-          box-shadow: 0 2px 8px rgba(65, 108, 109, 0.3);
-        }
-
         @media (max-width: 768px) {
           .add-queue-section {
             padding: 20px;
@@ -302,27 +157,6 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
           .add-button {
             width: 100%;
             padding: 16px 24px;
-          }
-
-          .timer-setting-group {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 20px;
-          }
-
-          .timer-label {
-            min-width: auto;
-          }
-
-          .timer-presets {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-          }
-
-          .presets-label {
-            min-width: auto;
           }
         }
 
@@ -345,10 +179,6 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({
           .add-button {
             padding: 12px 20px;
             font-size: 14px;
-          }
-
-          .timer-settings {
-            padding: 16px;
           }
 
           .preset-buttons {
