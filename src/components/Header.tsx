@@ -1,4 +1,6 @@
 import React from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -6,11 +8,29 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
+  const router = useRouter();
+
   return (
     <>
       <header className="header">
         <div className="header-content">
           <h1 className="app-title">Commit-Q</h1>
+
+          <nav className="navigation">
+            <Link
+              href="/"
+              className={`nav-link ${router.pathname === "/" ? "active" : ""}`}
+            >
+              Queue
+            </Link>
+            <Link
+              href="/action-items"
+              className={`nav-link ${router.pathname === "/action-items" ? "active" : ""}`}
+            >
+              Action Items
+            </Link>
+          </nav>
+
           <div className="connection-status">
             <span
               className={`status-indicator ${
@@ -65,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
         }
 
         .header-content {
-          max-width: 800px;
+          max-width: 900px;
           margin: 0 auto;
           padding: 0 20px;
           display: flex;
@@ -83,6 +103,37 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
           font-family: var(--font-secondary);
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           letter-spacing: -0.5px;
+          flex-shrink: 0;
+        }
+
+        .navigation {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .nav-link {
+          color: var(--color-text-light);
+          text-decoration: none;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-weight: 600;
+          font-size: 14px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          transition: all 0.2s ease;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+          background: rgba(255, 255, 255, 0.25);
+          border-color: rgba(255, 255, 255, 0.4);
         }
 
         .connection-status {
@@ -155,6 +206,10 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
             font-size: 2rem;
           }
 
+          .navigation {
+            order: -1;
+          }
+
           .connection-status {
             padding: 6px 12px;
           }
@@ -177,6 +232,11 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
 
           .app-title {
             font-size: 1.75rem;
+          }
+
+          .nav-link {
+            font-size: 13px;
+            padding: 6px 12px;
           }
 
           .error-message {

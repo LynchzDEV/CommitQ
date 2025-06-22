@@ -1,17 +1,30 @@
 # Real-time Queue Management System
 
-A real-time queue management system built with Next.js, TypeScript, and Socket.IO. This application allows multiple users to collaboratively manage a queue with real-time updates across all connected clients.
+A real-time queue management system with todo functionality built with Next.js, TypeScript, and Socket.IO. This application allows multiple users to collaboratively manage a queue and track action items with real-time updates across all connected clients.
 
 ## Features
 
+### Queue Management
 - **Real-time Updates**: All queue changes are instantly synchronized across all connected users
 - **Add Queue Items**: Add new items to the queue with a custom name
 - **Remove Queue Items**: Remove any item from the queue at any time
 - **Timer Functionality**: Start a countdown timer for the first item in the queue
 - **Auto-removal**: Items are automatically removed when their timer expires
 - **Currently Serving**: Visual indication of which item is currently being served
+
+### Action Items (Todo App)
+- **Task Management**: Create, complete, and manage action items
+- **Image Upload**: Attach completion proof images (max 3MB)
+- **Status Tracking**: Toggle between completed and pending states
+- **Task Description**: Add optional descriptions to tasks
+- **Completion History**: Track when tasks were created and completed
+- **Image Preview**: Click to view completion proof images in full size
+
+### General Features
 - **Responsive Design**: Works on desktop and mobile devices
 - **Connection Status**: Visual indicator of connection status
+- **Navigation**: Easy switching between Queue and Action Items pages
+- **Real-time Sync**: All changes are instantly synchronized across users
 
 ## Technology Stack
 
@@ -49,7 +62,9 @@ npm run dev
 yarn dev
 ```
 
-4. Open your browser and navigate to `http://localhost:3000`
+4. Open your browser and navigate to:
+   - `http://localhost:3000` - Queue Management
+   - `http://localhost:3000/action-items` - Action Items (Todo)
 
 ### Building for Production
 
@@ -141,45 +156,75 @@ The Docker container includes a health check endpoint at `/api/health` that retu
 
 ## Usage
 
-### Adding Items to Queue
+### Queue Management
 
-1. Enter a name in the "Enter queue name..." input field
-2. Click "Add to Queue" or press Enter
-3. The item will appear in the queue and be visible to all connected users in real-time
+#### Adding Items to Queue
+1. Navigate to the main page (`/`)
+2. Enter a name in the "Enter queue name..." input field
+3. Click "Add to Queue" or press Enter
+4. The item will appear in the queue and be visible to all connected users in real-time
 
-### Managing Queue Items
-
+#### Managing Queue Items
 - **View Queue**: All queue items are displayed with their position number and timestamp
 - **Remove Items**: Click the "Remove" button next to any queue item
 - **First in Line**: The first item in the queue is highlighted with a blue border
 
-### Timer Functionality
-
+#### Timer Functionality
 1. **Start Timer**: Click "Start Timer" on the first item in the queue
 2. **Set Duration**: Adjust the timer duration (5-300 seconds) using the input field
 3. **Timer Display**: Active timers show remaining time and a progress bar
 4. **Auto-removal**: Items are automatically removed when the timer expires
 5. **Stop Timer**: Click "Stop Timer" to cancel an active timer
 
-### Real-time Features
+### Action Items (Todo App)
 
+#### Creating Action Items
+1. Navigate to the Action Items page (`/action-items`)
+2. Enter a task title in the "What needs to be done?" input field
+3. Optionally add a description in the description field
+4. Click "Add Action Item" or press Enter
+5. The task will appear in the pending tasks section
+
+#### Managing Action Items
+- **Quick Complete**: Click the checkbox or "Quick Complete" button to mark as done
+- **Complete with Image**: Click "Complete with Image" to add completion proof
+  - Select an image file (max 3MB)
+  - Supported formats: JPG, PNG, GIF, WebP
+  - Image will be displayed with the completed task
+- **Uncomplete**: Click the checkbox on completed tasks to mark as pending again
+- **Remove**: Click the "Remove" button to delete any task
+- **View Images**: Click on completion proof images to view them full-size
+
+#### Task Organization
+- **Pending Tasks**: Shows all incomplete tasks with action buttons
+- **Completed Tasks**: Shows all finished tasks with completion timestamps
+- **Task Counter**: Displays count of pending and completed tasks
+
+### Navigation
+- Use the navigation buttons in the header to switch between:
+  - **Queue**: Main queue management interface
+  - **Action Items**: Todo list with image upload functionality
+
+### Real-time Features
 - All actions are immediately synchronized across all connected browsers
 - Connection status is displayed in the top-right corner
 - Error messages are shown for invalid operations
-- Queue updates happen instantly without page refresh
+- Updates happen instantly without page refresh
 
 ## API Structure
 
 ### Socket.IO Events
 
-#### Client to Server Events:
+#### Queue Events
+
+**Client to Server:**
 - `queue:add` - Add a new item to the queue
 - `queue:remove` - Remove an item from the queue
 - `queue:start-timer` - Start a timer for the first queue item
 - `queue:stop-timer` - Stop an active timer
 - `queue:get-state` - Request current queue state
 
-#### Server to Client Events:
+**Server to Client:**
 - `queue:updated` - Queue state has been updated
 - `queue:item-added` - New item was added to the queue
 - `queue:item-removed` - Item was removed from the queue
@@ -187,55 +232,115 @@ The Docker container includes a health check endpoint at `/api/health` that retu
 - `queue:timer-expired` - Timer has expired for an item
 - `queue:error` - Error occurred during operation
 
+#### Action Items Events
+
+**Client to Server:**
+- `actionItems:add` - Add a new action item
+- `actionItems:complete` - Mark an item as complete (with optional image)
+- `actionItems:uncomplete` - Mark an item as incomplete
+- `actionItems:remove` - Remove an action item
+- `actionItems:get-state` - Request current action items state
+
+**Server to Client:**
+- `actionItems:updated` - Action items state has been updated
+- `actionItems:item-added` - New action item was added
+- `actionItems:item-completed` - Action item was marked as complete
+- `actionItems:item-removed` - Action item was removed
+- `actionItems:error` - Error occurred during operation
+
 ## File Structure
 
 ```
 src/
+├── components/
+│   ├── ActionItemComponent.tsx    # Individual action item with image upload
+│   ├── AddActionItemForm.tsx      # Form for creating new action items
+│   ├── AddQueueForm.tsx          # Form for adding queue items
+│   ├── Header.tsx                # Header with navigation and status
+│   └── QueueItem.tsx             # Individual queue item component
 ├── hooks/
-│   └── useSocket.ts          # Socket.IO connection and queue management
+│   ├── useActionItems.ts         # Action items management hook
+│   └── useSocket.ts              # Socket.IO connection and queue management
 ├── pages/
 │   ├── api/
-│   │   └── socket.ts         # Socket.IO server implementation
-│   ├── _app.tsx             # Next.js app configuration
-│   ├── _document.tsx        # Next.js document configuration
-│   └── index.tsx            # Main queue management interface
+│   │   ├── health.ts             # Health check endpoint
+│   │   └── socket.ts             # Socket.IO server implementation
+│   ├── _app.tsx                  # Next.js app configuration
+│   ├── _document.tsx             # Next.js document configuration
+│   ├── action-items.tsx          # Action items (todo) interface
+│   └── index.tsx                 # Main queue management interface
+├── styles/
+│   └── globals.css               # Global styles and CSS variables
 └── types/
-    └── queue.ts             # TypeScript type definitions
+    ├── actionItems.ts            # Action items type definitions
+    └── queue.ts                  # Queue type definitions
 ```
 
 ## Key Components
 
-### useSocket Hook
+### Hooks
+
+#### useSocket Hook
 Custom React hook that manages:
 - Socket.IO connection
 - Queue state management
 - Real-time event handling
 - Error handling
 
-### Socket.IO Server
-- Handles real-time communication
-- Manages in-memory queue state
-- Implements timer functionality
+#### useActionItems Hook
+Custom React hook that manages:
+- Action items state
+- Task completion with image upload
+- Real-time synchronization
+- Filtering completed vs pending items
+
+### Server Components
+
+#### Socket.IO Server
+- Handles real-time communication for both queue and action items
+- Manages in-memory state for both features
+- Implements timer functionality for queue
+- Handles image upload for action items
 - Broadcasts updates to all clients
 
-### Queue Interface
+### UI Components
+
+#### Queue Interface
 - Responsive UI for queue management
 - Real-time timer display with progress bars
 - Visual indicators for queue status
 - Mobile-friendly design
 
+#### Action Items Interface
+- Todo-style task management
+- Image upload with 3MB size limit
+- Task completion with visual feedback
+- Separate sections for pending and completed tasks
+- Full-screen image preview modal
+
+#### Header Component
+- Navigation between Queue and Action Items
+- Real-time connection status indicator
+- Responsive design with mobile support
+
 ## Configuration
 
-### Timer Settings
+### Queue Settings
 - Default timer duration: 30 seconds
 - Minimum duration: 5 seconds
 - Maximum duration: 300 seconds (5 minutes)
 - Timer resolution: 1 second
-
-### Queue Limitations
 - Maximum queue name length: 50 characters
 - No limit on queue size
 - Timers only available for first queue item
+
+### Action Items Settings
+- Maximum task title length: 100 characters
+- Maximum description length: 300 characters
+- Image upload limit: 3MB per file
+- Supported image formats: JPG, PNG, GIF, WebP, SVG
+- No limit on number of action items
+- Images stored as base64 in memory
 
 ## Development
 
@@ -275,6 +380,18 @@ npm run lint
 - Only the first item in queue can have a timer
 - Ensure the item hasn't been removed from the queue
 - Check that timer duration is within valid range (5-300 seconds)
+
+### Image Upload Issues
+- Ensure image file is under 3MB in size
+- Verify the file is a supported image format
+- Check browser console for specific error messages
+- Try refreshing the page if upload fails
+
+### Action Items Not Syncing
+- Verify Socket.IO connection is active
+- Check that you're on the `/action-items` page
+- Refresh the page to re-establish connection
+- Ensure multiple browser tabs are connected to the same server
 
 ### Real-time Updates Not Working
 - Check connection status indicator in the top-right corner
