@@ -38,7 +38,7 @@ A real-time queue management system with todo functionality built with Next.js, 
 ### Prerequisites
 
 - Node.js 16.x or later
-- npm or yarn package manager
+- bun or yarn package manager
 
 ### Installation
 
@@ -50,14 +50,14 @@ cd commitq
 
 2. Install dependencies:
 ```bash
-npm install
+bun install
 # or
 yarn install
 ```
 
 3. Start the development server:
 ```bash
-npm run dev
+bun run dev
 # or
 yarn dev
 ```
@@ -69,8 +69,8 @@ yarn dev
 ### Building for Production
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 # or
 yarn build
 yarn start
@@ -169,13 +169,6 @@ The Docker container includes a health check endpoint at `/api/health` that retu
 - **Remove Items**: Click the "Remove" button next to any queue item
 - **First in Line**: The first item in the queue is highlighted with a blue border
 
-#### Timer Functionality
-1. **Start Timer**: Click "Start Timer" on the first item in the queue
-2. **Set Duration**: Adjust the timer duration (5-300 seconds) using the input field
-3. **Timer Display**: Active timers show remaining time and a progress bar
-4. **Auto-removal**: Items are automatically removed when the timer expires
-5. **Stop Timer**: Click "Stop Timer" to cancel an active timer
-
 ### Action Items (Todo App)
 
 #### Creating Action Items
@@ -220,16 +213,12 @@ The Docker container includes a health check endpoint at `/api/health` that retu
 **Client to Server:**
 - `queue:add` - Add a new item to the queue
 - `queue:remove` - Remove an item from the queue
-- `queue:start-timer` - Start a timer for the first queue item
-- `queue:stop-timer` - Stop an active timer
 - `queue:get-state` - Request current queue state
 
 **Server to Client:**
 - `queue:updated` - Queue state has been updated
 - `queue:item-added` - New item was added to the queue
 - `queue:item-removed` - Item was removed from the queue
-- `queue:timer-started` - Timer was started for an item
-- `queue:timer-expired` - Timer has expired for an item
 - `queue:error` - Error occurred during operation
 
 #### Action Items Events
@@ -346,19 +335,19 @@ Custom React hook that manages:
 
 ### Running in Development Mode
 ```bash
-npm run dev
+bun run dev
 ```
 The application will be available at `http://localhost:3000` with hot reloading enabled.
 
 ### Building for Production
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
 ### Linting
 ```bash
-npm run lint
+bun run lint
 ```
 
 ## Browser Support
