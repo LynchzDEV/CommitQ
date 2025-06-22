@@ -2,6 +2,7 @@ export interface QueueItem {
   id: string;
   name: string;
   addedAt: Date;
+  fastTrack: boolean;
 }
 
 export interface QueueState {

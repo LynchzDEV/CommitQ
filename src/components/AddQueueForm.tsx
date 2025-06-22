@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 
 interface AddQueueFormProps {
-  onAddToQueue: (name: string) => void;
+  onAddToQueue: (name: string, isFastTrack?: boolean) => void;
 }
 
 export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
   const [newQueueName, setNewQueueName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, isFastTrack: boolean = false) => {
     e.preventDefault();
     if (newQueueName.trim()) {
-      onAddToQueue(newQueueName.trim());
+      onAddToQueue(newQueueName.trim(), isFastTrack);
       setNewQueueName("");
     }
   };
@@ -31,14 +31,25 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
               maxLength={50}
               autoComplete="off"
             />
-            <button
-              type="submit"
-              disabled={!newQueueName.trim()}
-              className="btn-primary add-button"
-            >
-              <span className="button-icon">➕</span>
-              Add to Queue
-            </button>
+            <div className="button-group">
+              <button
+                type="submit"
+                disabled={!newQueueName.trim()}
+                className="btn-primary add-button"
+              >
+                <span className="button-icon">➕</span>
+                Add to Queue
+              </button>
+              <button
+                type="button"
+                disabled={!newQueueName.trim()}
+                className="btn-error fast-track-button"
+                onClick={(e) => handleSubmit(e, true)}
+              >
+                <span className="button-icon">⚡</span>
+                <span className="button-text">Fast Track</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -93,6 +104,7 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
 
         .input-group {
           display: flex;
+          flex-direction: column;
           gap: 12px;
           align-items: stretch;
         }
@@ -124,7 +136,13 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
           opacity: 0.7;
         }
 
-        .add-button {
+        .button-group {
+          display: flex;
+          gap: 12px;
+        }
+
+        .add-button,
+        .fast-track-button {
           padding: 14px 24px;
           font-size: 16px;
           font-weight: 600;
@@ -137,10 +155,70 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
           gap: 8px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          flex: 1;
+        }
+
+        .fast-track-button {
+          background-color: var(--color-error);
+          border: 2px solid #b02a37;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .fast-track-button::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.1),
+            rgba(255, 255, 255, 0.3),
+            rgba(255, 255, 255, 0.1)
+          );
+          transition: all 0.6s;
+          z-index: 1;
+        }
+
+        .fast-track-button:hover:not(:disabled) {
+          background-color: var(--color-error-dark, #c82333);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .fast-track-button:hover:not(:disabled)::before {
+          left: 100%;
         }
 
         .button-icon {
-          font-size: 14px;
+          font-size: 16px;
+        }
+
+        .button-text {
+          position: relative;
+          z-index: 2;
+        }
+
+        .fast-track-button .button-icon {
+          animation: shake 1s infinite;
+          display: inline-block;
+        }
+
+        @keyframes shake {
+          0% {
+            transform: rotate(0deg);
+          }
+          25% {
+            transform: rotate(15deg);
+          }
+          75% {
+            transform: rotate(-15deg);
+          }
+          100% {
+            transform: rotate(0deg);
+          }
         }
 
         @media (max-width: 768px) {
@@ -154,7 +232,13 @@ export const AddQueueForm: React.FC<AddQueueFormProps> = ({ onAddToQueue }) => {
             gap: 16px;
           }
 
-          .add-button {
+          .button-group {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .add-button,
+          .fast-track-button {
             width: 100%;
             padding: 16px 24px;
           }

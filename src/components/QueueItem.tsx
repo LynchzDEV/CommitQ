@@ -15,11 +15,18 @@ export const QueueItem: React.FC<QueueItemProps> = ({
   onRemove,
 }) => {
   return (
-    <div className={`queue-item fade-in ${isFirst ? "first-item" : ""}`}>
+    <div
+      className={`queue-item fade-in ${isFirst ? "first-item" : ""} ${item.fastTrack ? "fast-track" : ""}`}
+    >
       <div className="queue-item-content">
         <div className="queue-item-info">
           <div className="queue-position">#{index + 1}</div>
-          <div className="queue-name">{item.name}</div>
+          <div className="queue-name">
+            {item.name}
+            {item.fastTrack && (
+              <span className="fast-track-badge">FAST TRACK</span>
+            )}
+          </div>
           <div className="queue-time">
             Added: {new Date(item.addedAt).toLocaleTimeString()}
           </div>
@@ -59,6 +66,22 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           box-shadow: 0 8px 24px rgba(65, 108, 109, 0.25);
         }
 
+        .queue-item.fast-track {
+          border-color: #dc3545;
+          background: linear-gradient(
+            90deg,
+            rgba(220, 53, 69, 0.2) 0%,
+            rgba(220, 53, 69, 0.1) 100%
+          );
+          border-left: 6px solid #dc3545;
+          box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        }
+
+        .queue-item.fast-track:hover {
+          box-shadow: 0 8px 24px rgba(220, 53, 69, 0.25);
+          transform: translateY(-3px);
+        }
+
         .queue-item-content {
           padding: 20px;
         }
@@ -82,6 +105,12 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           box-shadow: 0 2px 8px rgba(65, 108, 109, 0.3);
         }
 
+        .queue-item.fast-track .queue-position {
+          background: #dc3545;
+          color: white;
+          box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+        }
+
         .queue-item.currently-serving .queue-position {
           background: var(--color-secondary);
           box-shadow: 0 2px 8px rgba(154, 181, 181, 0.3);
@@ -93,6 +122,36 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           flex: 1;
           color: var(--color-text-primary);
           font-family: var(--font-secondary);
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .fast-track-badge {
+          background-color: #dc3545;
+          color: white;
+          font-size: 11px;
+          font-weight: 800;
+          padding: 4px 8px;
+          border-radius: 6px;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+          animation: pulse 2s infinite;
+          border: 1px solid #b02a37;
+        }
+
+        @keyframes pulse {
+          0% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.8;
+          }
+          100% {
+            opacity: 1;
+          }
         }
 
         .queue-time {

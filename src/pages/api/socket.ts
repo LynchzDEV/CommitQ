@@ -44,7 +44,7 @@ export default function handler(
       socket.emit("queue:updated", queueState);
 
       // Handle adding item to queue
-      socket.on("queue:add", (name: string) => {
+      socket.on("queue:add", (name: string, isFastTrack?: boolean) => {
         if (!name || name.trim() === "") {
           socket.emit("queue:error", "Queue name cannot be empty");
           return;
@@ -54,15 +54,37 @@ export default function handler(
           id: generateId(),
           name: name.trim(),
           addedAt: new Date(),
+          fastTrack: !!isFastTrack,
         };
 
-        queueState.items.push(newItem);
+        // If fast track, add to the first position or after other fast track items
+        if (isFastTrack) {
+          // Find the first position where we should insert this fast track item
+          // Fast track items should be at the beginning, but maintain their order
+          let insertIndex = 0;
+
+          // Find where to insert - after existing fast track items but before regular items
+          for (let i = 0; i < queueState.items.length; i++) {
+            if (queueState.items[i].fastTrack) {
+              insertIndex = i + 1;
+            } else {
+              break;
+            }
+          }
+
+          queueState.items.splice(insertIndex, 0, newItem);
+          console.log(
+            `Added FAST TRACK to queue at position ${insertIndex}: ${newItem.name} (${newItem.id})`,
+          );
+        } else {
+          // Regular add to end of queue
+          queueState.items.push(newItem);
+          console.log(`Added to queue: ${newItem.name} (${newItem.id})`);
+        }
 
         // Broadcast to all clients
         io.emit("queue:updated", queueState);
         io.emit("queue:item-added", newItem);
-
-        console.log(`Added to queue: ${newItem.name} (${newItem.id})`);
       });
 
       // Handle removing item from queue

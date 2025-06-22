@@ -50,9 +50,9 @@ export const useSocket = () => {
   }, []);
 
   const addToQueue = useCallback(
-    (name: string) => {
+    (name: string, isFastTrack: boolean = false) => {
       if (socket) {
-        socket.emit("queue:add", name);
+        socket.emit("queue:add", name, isFastTrack);
       }
     },
     [socket],
