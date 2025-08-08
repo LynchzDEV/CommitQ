@@ -3,6 +3,7 @@ export interface QueueItem {
   name: string;
   addedAt: Date;
   fastTrack: boolean;
+  team: string;
 }
 
 export interface QueueState {
@@ -11,9 +12,11 @@ export interface QueueState {
 
 export interface SocketEvents {
   // Client to Server
-  "queue:add": (name: string) => void;
-  "queue:remove": (id: string) => void;
-  "queue:get-state": () => void;
+  "queue:add": (name: string, team: string, isFastTrack?: boolean) => void;
+  "queue:remove": (id: string, team: string) => void;
+  "queue:get-state": (team: string) => void;
+  "queue:join-team": (team: string) => void;
+  "queue:leave-team": (team: string) => void;
 
   // Server to Client
   "queue:updated": (state: QueueState) => void;

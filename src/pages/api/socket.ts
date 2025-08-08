@@ -13,14 +13,24 @@ interface NextApiResponseWithSocket extends NextApiResponse {
   };
 }
 
-// In-memory queue state
-let queueState: QueueState = {
-  items: [],
+// In-memory team-separated states
+const teamQueueStates: Map<string, QueueState> = new Map();
+const teamActionItemsStates: Map<string, ActionItemsState> = new Map();
+
+// Helper function to get or create team queue state
+const getTeamQueueState = (team: string): QueueState => {
+  if (!teamQueueStates.has(team)) {
+    teamQueueStates.set(team, { items: [] });
+  }
+  return teamQueueStates.get(team)!;
 };
 
-// In-memory action items state
-let actionItemsState: ActionItemsState = {
-  items: [],
+// Helper function to get or create team action items state
+const getTeamActionItemsState = (team: string): ActionItemsState => {
+  if (!teamActionItemsStates.has(team)) {
+    teamActionItemsStates.set(team, { items: [] });
+  }
+  return teamActionItemsStates.get(team)!;
 };
 
 // Generate unique ID
@@ -46,22 +56,48 @@ export default function handler(
     io.on("connection", (socket) => {
       console.log("Client connected:", socket.id);
 
-      // Send current state to newly connected client
-      socket.emit("queue:updated", queueState);
-      socket.emit("actionItems:updated", actionItemsState);
+      // Handle team joining for queue
+      socket.on("queue:join-team", (team: string) => {
+        socket.join(`queue:${team}`);
+        const teamState = getTeamQueueState(team);
+        socket.emit("queue:updated", teamState);
+        console.log(`Socket ${socket.id} joined queue team: ${team}`);
+      });
+
+      // Handle team leaving for queue
+      socket.on("queue:leave-team", (team: string) => {
+        socket.leave(`queue:${team}`);
+        console.log(`Socket ${socket.id} left queue team: ${team}`);
+      });
+
+      // Handle team joining for action items
+      socket.on("actionItems:join-team", (team: string) => {
+        socket.join(`actionItems:${team}`);
+        const teamState = getTeamActionItemsState(team);
+        socket.emit("actionItems:updated", teamState);
+        console.log(`Socket ${socket.id} joined actionItems team: ${team}`);
+      });
+
+      // Handle team leaving for action items
+      socket.on("actionItems:leave-team", (team: string) => {
+        socket.leave(`actionItems:${team}`);
+        console.log(`Socket ${socket.id} left actionItems team: ${team}`);
+      });
 
       // Handle adding item to queue
-      socket.on("queue:add", (name: string, isFastTrack?: boolean) => {
+      socket.on("queue:add", (name: string, team: string, isFastTrack?: boolean) => {
         if (!name || name.trim() === "") {
           socket.emit("queue:error", "Queue name cannot be empty");
           return;
         }
 
+        const teamState = getTeamQueueState(team);
         const newItem: QueueItem = {
           id: generateId(),
           name: name.trim(),
           addedAt: new Date(),
           fastTrack: !!isFastTrack,
+          team: team,
         };
 
         // If fast track, add to the first position or after other fast track items
@@ -71,32 +107,33 @@ export default function handler(
           let insertIndex = 0;
 
           // Find where to insert - after existing fast track items but before regular items
-          for (let i = 0; i < queueState.items.length; i++) {
-            if (queueState.items[i].fastTrack) {
+          for (let i = 0; i < teamState.items.length; i++) {
+            if (teamState.items[i].fastTrack) {
               insertIndex = i + 1;
             } else {
               break;
             }
           }
 
-          queueState.items.splice(insertIndex, 0, newItem);
+          teamState.items.splice(insertIndex, 0, newItem);
           console.log(
-            `Added FAST TRACK to queue at position ${insertIndex}: ${newItem.name} (${newItem.id})`,
+            `Added FAST TRACK to queue at position ${insertIndex} for team ${team}: ${newItem.name} (${newItem.id})`,
           );
         } else {
           // Regular add to end of queue
-          queueState.items.push(newItem);
-          console.log(`Added to queue: ${newItem.name} (${newItem.id})`);
+          teamState.items.push(newItem);
+          console.log(`Added to queue for team ${team}: ${newItem.name} (${newItem.id})`);
         }
 
-        // Broadcast to all clients
-        io.emit("queue:updated", queueState);
-        io.emit("queue:item-added", newItem);
+        // Broadcast to team members only
+        io.to(`queue:${team}`).emit("queue:updated", teamState);
+        io.to(`queue:${team}`).emit("queue:item-added", newItem);
       });
 
       // Handle removing item from queue
-      socket.on("queue:remove", (id: string) => {
-        const itemIndex = queueState.items.findIndex((item) => item.id === id);
+      socket.on("queue:remove", (id: string, team: string) => {
+        const teamState = getTeamQueueState(team);
+        const itemIndex = teamState.items.findIndex((item) => item.id === id);
 
         if (itemIndex === -1) {
           socket.emit("queue:error", "Queue item not found");
@@ -104,54 +141,59 @@ export default function handler(
         }
 
         // Remove item from queue
-        const removedItem = queueState.items.splice(itemIndex, 1)[0];
+        const removedItem = teamState.items.splice(itemIndex, 1)[0];
 
-        // Broadcast to all clients
-        io.emit("queue:updated", queueState);
-        io.emit("queue:item-removed", id);
+        // Broadcast to team members only
+        io.to(`queue:${team}`).emit("queue:updated", teamState);
+        io.to(`queue:${team}`).emit("queue:item-removed", id);
 
-        console.log(`Removed from queue: ${removedItem.name} (${id})`);
+        console.log(`Removed from queue for team ${team}: ${removedItem.name} (${id})`);
       });
 
       // Handle getting current state
-      socket.on("queue:get-state", () => {
-        socket.emit("queue:updated", queueState);
+      socket.on("queue:get-state", (team: string) => {
+        const teamState = getTeamQueueState(team);
+        socket.emit("queue:updated", teamState);
       });
 
       // Handle getting action items state
-      socket.on("actionItems:get-state", () => {
-        socket.emit("actionItems:updated", actionItemsState);
+      socket.on("actionItems:get-state", (team: string) => {
+        const teamState = getTeamActionItemsState(team);
+        socket.emit("actionItems:updated", teamState);
       });
 
       // Handle adding action item
-      socket.on("actionItems:add", (title: string, description?: string) => {
+      socket.on("actionItems:add", (title: string, team: string, description?: string) => {
         if (!title || title.trim() === "") {
           socket.emit("actionItems:error", "Action item title cannot be empty");
           return;
         }
 
+        const teamState = getTeamActionItemsState(team);
         const newItem: ActionItem = {
           id: generateId(),
           title: title.trim(),
           description: description?.trim(),
           completed: false,
           createdAt: new Date(),
+          team: team,
         };
 
-        actionItemsState.items.push(newItem);
+        teamState.items.push(newItem);
 
-        // Broadcast to all clients
-        io.emit("actionItems:updated", actionItemsState);
-        io.emit("actionItems:item-added", newItem);
+        // Broadcast to team members only
+        io.to(`actionItems:${team}`).emit("actionItems:updated", teamState);
+        io.to(`actionItems:${team}`).emit("actionItems:item-added", newItem);
 
-        console.log(`Added action item: ${newItem.title} (${newItem.id})`);
+        console.log(`Added action item for team ${team}: ${newItem.title} (${newItem.id})`);
       });
 
       // Handle completing action item
       socket.on(
         "actionItems:complete",
-        (id: string, image?: string, imageName?: string) => {
-          const itemIndex = actionItemsState.items.findIndex(
+        (id: string, team: string, image?: string, imageName?: string) => {
+          const teamState = getTeamActionItemsState(team);
+          const itemIndex = teamState.items.findIndex(
             (item) => item.id === id,
           );
 
@@ -160,10 +202,10 @@ export default function handler(
             return;
           }
 
-          const item = actionItemsState.items[itemIndex];
+          const item = teamState.items[itemIndex];
 
           // Update item to completed
-          actionItemsState.items[itemIndex] = {
+          teamState.items[itemIndex] = {
             ...item,
             completed: true,
             completedAt: new Date(),
@@ -171,17 +213,18 @@ export default function handler(
             completionImageName: imageName,
           };
 
-          // Broadcast to all clients
-          io.emit("actionItems:updated", actionItemsState);
-          io.emit("actionItems:item-completed", id);
+          // Broadcast to team members only
+          io.to(`actionItems:${team}`).emit("actionItems:updated", teamState);
+          io.to(`actionItems:${team}`).emit("actionItems:item-completed", id);
 
-          console.log(`Completed action item: ${item.title} (${id})`);
+          console.log(`Completed action item for team ${team}: ${item.title} (${id})`);
         },
       );
 
       // Handle uncompleting action item
-      socket.on("actionItems:uncomplete", (id: string) => {
-        const itemIndex = actionItemsState.items.findIndex(
+      socket.on("actionItems:uncomplete", (id: string, team: string) => {
+        const teamState = getTeamActionItemsState(team);
+        const itemIndex = teamState.items.findIndex(
           (item) => item.id === id,
         );
 
@@ -190,10 +233,10 @@ export default function handler(
           return;
         }
 
-        const item = actionItemsState.items[itemIndex];
+        const item = teamState.items[itemIndex];
 
         // Update item to uncompleted
-        actionItemsState.items[itemIndex] = {
+        teamState.items[itemIndex] = {
           ...item,
           completed: false,
           completedAt: undefined,
@@ -201,15 +244,16 @@ export default function handler(
           completionImageName: undefined,
         };
 
-        // Broadcast to all clients
-        io.emit("actionItems:updated", actionItemsState);
+        // Broadcast to team members only
+        io.to(`actionItems:${team}`).emit("actionItems:updated", teamState);
 
-        console.log(`Uncompleted action item: ${item.title} (${id})`);
+        console.log(`Uncompleted action item for team ${team}: ${item.title} (${id})`);
       });
 
       // Handle removing action item
-      socket.on("actionItems:remove", (id: string) => {
-        const itemIndex = actionItemsState.items.findIndex(
+      socket.on("actionItems:remove", (id: string, team: string) => {
+        const teamState = getTeamActionItemsState(team);
+        const itemIndex = teamState.items.findIndex(
           (item) => item.id === id,
         );
 
@@ -218,13 +262,13 @@ export default function handler(
           return;
         }
 
-        const removedItem = actionItemsState.items.splice(itemIndex, 1)[0];
+        const removedItem = teamState.items.splice(itemIndex, 1)[0];
 
-        // Broadcast to all clients
-        io.emit("actionItems:updated", actionItemsState);
-        io.emit("actionItems:item-removed", id);
+        // Broadcast to team members only
+        io.to(`actionItems:${team}`).emit("actionItems:updated", teamState);
+        io.to(`actionItems:${team}`).emit("actionItems:item-removed", id);
 
-        console.log(`Removed action item: ${removedItem.title} (${id})`);
+        console.log(`Removed action item for team ${team}: ${removedItem.title} (${id})`);
       });
 
       socket.on("disconnect", () => {

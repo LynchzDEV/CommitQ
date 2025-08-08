@@ -90,7 +90,12 @@ export const ActionItemComponent: React.FC<ActionItemProps> = ({
           </div>
 
           <div className="action-item-info">
-            <h3 className="action-title">{item.title}</h3>
+            <div className="title-container">
+              <h3 className="action-title">{item.title}</h3>
+              <span className="team-badge">
+                {item.team === "bma-training" ? "🎓" : "☕"}
+              </span>
+            </div>
             {item.description && (
               <p className="action-description">{item.description}</p>
             )}
@@ -252,12 +257,27 @@ export const ActionItemComponent: React.FC<ActionItemProps> = ({
           flex: 1;
         }
 
+        .title-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
         .action-title {
-          margin: 0 0 8px 0;
+          margin: 0;
           font-size: 18px;
           font-weight: 600;
           color: var(--color-text-primary);
           font-family: var(--font-secondary);
+          flex: 1;
+        }
+
+        .team-badge {
+          font-size: 14px;
+          opacity: 0.6;
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+          flex-shrink: 0;
         }
 
         .action-item.completed .action-title {

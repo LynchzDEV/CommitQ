@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useActionItems } from "@/hooks/useActionItems";
 import { Header } from "@/components/Header";
 import { AddActionItemForm } from "@/components/AddActionItemForm";
 import { ActionItemComponent } from "@/components/ActionItemComponent";
+import { getCurrentTeam, subscribeToTeamChanges, type Team } from "@/components/TeamSelector";
 
 export default function ActionItems() {
+  const [currentTeam, setCurrentTeam] = useState<Team>("bma-training");
   const {
     actionItemsState,
     completedItems,
@@ -17,6 +19,18 @@ export default function ActionItems() {
     removeActionItem,
   } = useActionItems();
 
+  // Track current team
+  useEffect(() => {
+    setCurrentTeam(getCurrentTeam());
+    const unsubscribe = subscribeToTeamChanges(setCurrentTeam);
+    return unsubscribe;
+  }, []);
+
+  // Team display names
+  const getTeamDisplayName = (team: Team) => {
+    return team === "bma-training" ? "BMA Training" : "Caffeine";
+  };
+
   return (
     <div className="app-container">
       <Header isConnected={isConnected} error={error} />
@@ -28,7 +42,7 @@ export default function ActionItems() {
         <div className="action-items-section">
           <div className="section-header">
             <h2 className="section-title">
-              Pending Tasks
+              {getTeamDisplayName(currentTeam)} Pending Tasks
               <span className="item-count">({pendingItems.length})</span>
             </h2>
             {pendingItems.length > 0 && (
@@ -42,10 +56,10 @@ export default function ActionItems() {
 
           {pendingItems.length === 0 ? (
             <div className="empty-section fade-in">
-              <div className="empty-icon">✅</div>
-              <h3 className="empty-title">No pending tasks</h3>
+              <div className="empty-icon">{currentTeam === "bma-training" ? "🎓" : "☕"}</div>
+              <h3 className="empty-title">No pending tasks for {getTeamDisplayName(currentTeam)}</h3>
               <p className="empty-description">
-                Great job! All your tasks are completed. Add a new task above to get started.
+                Great job! All {getTeamDisplayName(currentTeam)} tasks are completed. Add a new task above to get started.
               </p>
             </div>
           ) : (
@@ -68,7 +82,7 @@ export default function ActionItems() {
           <div className="action-items-section">
             <div className="section-header">
               <h2 className="section-title">
-                Completed Tasks
+                {getTeamDisplayName(currentTeam)} Completed Tasks
                 <span className="item-count completed">({completedItems.length})</span>
               </h2>
               <div className="section-stats">

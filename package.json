@@ -6,7 +6,12 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:team-selector": "playwright test e2e/team-selector.spec.ts",
+    "test:team-selector:ui": "playwright test e2e/team-selector.spec.ts --ui"
   },
   "dependencies": {
     "next": "14.0.4",
@@ -16,6 +21,7 @@
     "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

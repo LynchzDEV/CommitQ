@@ -1,12 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { Header } from "@/components/Header";
 import { AddQueueForm } from "@/components/AddQueueForm";
 import { QueueItem } from "@/components/QueueItem";
+import { getCurrentTeam, subscribeToTeamChanges, type Team } from "@/components/TeamSelector";
 
 export default function Home() {
+  const [currentTeam, setCurrentTeam] = useState<Team>("bma-training");
   const { queueState, isConnected, error, addToQueue, removeFromQueue } =
     useSocket();
+
+  // Track current team
+  useEffect(() => {
+    setCurrentTeam(getCurrentTeam());
+    const unsubscribe = subscribeToTeamChanges(setCurrentTeam);
+    return unsubscribe;
+  }, []);
+
+  // Team display names
+  const getTeamDisplayName = (team: Team) => {
+    return team === "bma-training" ? "BMA Training" : "Caffeine";
+  };
 
   return (
     <div className="app-container">
@@ -18,7 +32,7 @@ export default function Home() {
         <div className="queue-section">
           <div className="queue-header">
             <h2 className="queue-title">
-              Current Queue
+              {getTeamDisplayName(currentTeam)} Queue
               <span className="queue-count">({queueState.items.length})</span>
             </h2>
             {queueState.items.length > 0 && (
@@ -35,10 +49,10 @@ export default function Home() {
 
           {queueState.items.length === 0 ? (
             <div className="empty-queue fade-in">
-              <div className="empty-icon">📋</div>
-              <h3 className="empty-title">Queue is empty</h3>
+              <div className="empty-icon">{currentTeam === "bma-training" ? "🎓" : "☕"}</div>
+              <h3 className="empty-title">No items in {getTeamDisplayName(currentTeam)} queue</h3>
               <p className="empty-description">
-                Add your name above to join the queue
+                Add your name above to join the {getTeamDisplayName(currentTeam)} queue
               </p>
             </div>
           ) : (

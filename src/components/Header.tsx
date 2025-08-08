@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { TeamSelector } from "./TeamSelector";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -16,20 +17,32 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
         <div className="header-content">
           <h1 className="app-title">Commit-Q</h1>
 
-          <nav className="navigation">
+          <nav
+            className="navigation"
+            role="navigation"
+            aria-label="Main navigation"
+          >
             <Link
               href="/"
               className={`nav-link ${router.pathname === "/" ? "active" : ""}`}
+              aria-label="View Queue page"
+              aria-current={router.pathname === "/" ? "page" : undefined}
             >
               Queue
             </Link>
             <Link
               href="/action-items"
               className={`nav-link ${router.pathname === "/action-items" ? "active" : ""}`}
+              aria-label="View Action Items page"
+              aria-current={
+                router.pathname === "/action-items" ? "page" : undefined
+              }
             >
               Action Items
             </Link>
           </nav>
+
+          <TeamSelector />
 
           <div className="connection-status">
             <span
@@ -65,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
           border-radius: 0 0 16px 16px;
           box-shadow: 0 4px 16px rgba(65, 108, 109, 0.2);
           position: relative;
-          overflow: hidden;
+          overflow: visible;
         }
 
         .header::before {
@@ -93,6 +106,8 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
           align-items: center;
           position: relative;
           z-index: 1;
+          gap: 16px;
+          overflow: visible;
         }
 
         .app-title {
@@ -112,28 +127,65 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
           align-items: center;
         }
 
-        .nav-link {
+        :global(.nav-link) {
           color: var(--color-text-light);
           text-decoration: none;
-          padding: 8px 16px;
-          border-radius: 20px;
+          padding: 10px 18px;
+          border-radius: 22px;
           font-weight: 600;
           font-size: 14px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          transition: all 0.2s ease;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          backdrop-filter: blur(12px);
+          transition: all 0.3s ease;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+          position: relative;
+          overflow: hidden;
         }
 
-        .nav-link:hover {
+        :global(.nav-link)::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+          );
+          transition: left 0.5s ease;
+        }
+
+        :global(.nav-link):hover::before {
+          left: 100%;
+        }
+
+        :global(.nav-link):hover {
           background: rgba(255, 255, 255, 0.2);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(65, 108, 109, 0.2);
+        }
+
+        :global(.nav-link):focus {
+          outline: none;
+          background: rgba(255, 255, 255, 0.2);
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
           transform: translateY(-1px);
         }
 
-        .nav-link.active {
+        :global(.nav-link.active) {
           background: rgba(255, 255, 255, 0.25);
           border-color: rgba(255, 255, 255, 0.4);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        :global(.nav-link.active):hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(65, 108, 109, 0.25);
         }
 
         .connection-status {
@@ -198,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
 
           .header-content {
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
             text-align: center;
           }
 
@@ -234,9 +286,14 @@ export const Header: React.FC<HeaderProps> = ({ isConnected, error }) => {
             font-size: 1.75rem;
           }
 
-          .nav-link {
+          :global(.nav-link) {
             font-size: 13px;
-            padding: 6px 12px;
+            padding: 8px 14px;
+            border-radius: 18px;
+          }
+
+          :global(.nav-link):hover {
+            transform: translateY(-0.5px);
           }
 
           .error-message {

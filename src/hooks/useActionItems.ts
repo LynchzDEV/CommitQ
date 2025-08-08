@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { ActionItem, ActionItemsState } from "@/types/actionItems";
+import { getCurrentTeam, subscribeToTeamChanges, Team } from "@/components/TeamSelector";
 
 export const useActionItems = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -10,6 +11,7 @@ export const useActionItems = () => {
   });
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTeam, setCurrentTeam] = useState<Team>(getCurrentTeam());
 
   useEffect(() => {
     const socketInstance = io({
@@ -20,8 +22,8 @@ export const useActionItems = () => {
       console.log("Connected to server for action items");
       setIsConnected(true);
       setError(null);
-      // Request current state when connected
-      socketInstance.emit("actionItems:get-state");
+      // Join the current team room immediately on connection
+      socketInstance.emit("actionItems:join-team", currentTeam);
     });
 
     socketInstance.on("disconnect", () => {
@@ -57,49 +59,69 @@ export const useActionItems = () => {
     return () => {
       socketInstance.disconnect();
     };
-  }, []);
+  }, [currentTeam]);
 
   const addActionItem = useCallback(
     (title: string, description?: string) => {
       if (socket) {
-        socket.emit("actionItems:add", title, description);
+        socket.emit("actionItems:add", title, currentTeam, description);
       }
     },
-    [socket],
+    [socket, currentTeam],
   );
 
   const completeActionItem = useCallback(
     (id: string, image?: string, imageName?: string) => {
       if (socket) {
-        socket.emit("actionItems:complete", id, image, imageName);
+        socket.emit("actionItems:complete", id, currentTeam, image, imageName);
       }
     },
-    [socket],
+    [socket, currentTeam],
   );
 
   const uncompleteActionItem = useCallback(
     (id: string) => {
       if (socket) {
-        socket.emit("actionItems:uncomplete", id);
+        socket.emit("actionItems:uncomplete", id, currentTeam);
       }
     },
-    [socket],
+    [socket, currentTeam],
   );
 
   const removeActionItem = useCallback(
     (id: string) => {
       if (socket) {
-        socket.emit("actionItems:remove", id);
+        socket.emit("actionItems:remove", id, currentTeam);
       }
     },
-    [socket],
+    [socket, currentTeam],
   );
 
   const refreshState = useCallback(() => {
     if (socket) {
-      socket.emit("actionItems:get-state");
+      socket.emit("actionItems:get-state", currentTeam);
     }
-  }, [socket]);
+  }, [socket, currentTeam]);
+
+  // Handle team changes
+  useEffect(() => {
+    const unsubscribe = subscribeToTeamChanges((newTeam) => {
+      console.log("Team changed in useActionItems:", newTeam);
+      
+      // Leave current team room
+      if (socket) {
+        socket.emit("actionItems:leave-team", currentTeam);
+        // Join new team room
+        socket.emit("actionItems:join-team", newTeam);
+        // Clear current state to avoid showing old team data
+        setActionItemsState({ items: [] });
+      }
+      
+      setCurrentTeam(newTeam);
+    });
+
+    return unsubscribe;
+  }, [socket, currentTeam]);
 
   // Filter completed and pending items
   const completedItems = actionItemsState.items.filter(
@@ -118,5 +140,6 @@ export const useActionItems = () => {
     uncompleteActionItem,
     removeActionItem,
     refreshState,
+    currentTeam,
   };
 };

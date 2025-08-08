@@ -23,6 +23,9 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           <div className="queue-position">#{index + 1}</div>
           <div className="queue-name">
             {item.name}
+            <span className="team-badge">
+              {item.team === "bma-training" ? "🎓" : "☕"}
+            </span>
             {item.fastTrack && (
               <span className="fast-track-badge">FAST TRACK</span>
             )}
@@ -126,6 +129,14 @@ export const QueueItem: React.FC<QueueItemProps> = ({
           align-items: center;
           flex-wrap: wrap;
           gap: 8px;
+        }
+
+        .team-badge {
+          font-size: 14px;
+          opacity: 0.7;
+          margin-left: 4px;
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+          flex-shrink: 0;
         }
 
         .fast-track-badge {

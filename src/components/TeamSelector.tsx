@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 export interface TeamSelectorProps {
   onTeamChange?: (team: string) => void;
@@ -13,6 +13,9 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
 }) => {
   const [selectedTeam, setSelectedTeam] = useState<Team>("bma-training");
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   const teams: { value: Team; label: string; emoji: string }[] = [
     { value: "bma-training", label: "BMA Training", emoji: "🎓" },
@@ -27,8 +30,59 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
     }
   }, []);
 
+  // Calculate dropdown position
+  const calculateDropdownPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    
+    const rect = buttonRef.current.getBoundingClientRect();
+    const scrollTop = window.scrollY;
+    const scrollLeft = window.scrollX;
+    
+    setDropdownPosition({
+      top: rect.bottom + scrollTop + 4,
+      left: rect.left + scrollLeft,
+      width: rect.width
+    });
+  }, []);
+
+  // Handle scroll and resize events for dynamic positioning
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => {
+      calculateDropdownPosition();
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        buttonRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    document.addEventListener("mousedown", handleClickOutside, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, calculateDropdownPosition]);
+
   // Save to localStorage and emit event when team changes
-  const handleTeamChange = (team: Team) => {
+  const handleTeamChange = (team: Team, event?: React.MouseEvent) => {
+    // Prevent event bubbling to avoid interference
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     setSelectedTeam(team);
     setIsOpen(false);
     
@@ -45,6 +99,20 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
     onTeamChange?.(team);
   };
 
+  const toggleDropdown = () => {
+    if (!isOpen) {
+      calculateDropdownPosition();
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape' && isOpen) {
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    }
+  };
+
   const selectedTeamData = teams.find(team => team.value === selectedTeam)!;
 
   return (
@@ -53,8 +121,9 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
         <div className="team-selector-label">Team:</div>
         <div className={`team-dropdown ${isOpen ? "open" : ""}`}>
           <button
+            ref={buttonRef}
             className="team-button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleDropdown}
             aria-expanded={isOpen}
             aria-haspopup="listbox"
             role="combobox"
@@ -63,45 +132,74 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
             <span className="team-name">{selectedTeamData.label}</span>
             <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▼</span>
           </button>
-          
-          {isOpen && (
-            <div className="team-options" role="listbox">
-              {teams.map((team) => (
-                <button
-                  key={team.value}
-                  className={`team-option ${
-                    selectedTeam === team.value ? "selected" : ""
-                  }`}
-                  onClick={() => handleTeamChange(team.value)}
-                  role="option"
-                  aria-selected={selectedTeam === team.value}
-                >
-                  <span className="team-emoji">{team.emoji}</span>
-                  <span className="team-name">{team.label}</span>
-                  {selectedTeam === team.value && (
-                    <span className="checkmark">✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-        
-        {/* Click outside to close */}
-        {isOpen && (
-          <div
-            className="dropdown-backdrop"
-            onClick={() => setIsOpen(false)}
-          />
-        )}
       </div>
+      
+      {/* Backdrop and dropdown as siblings to control z-index properly */}
+      {isOpen && (
+        <>
+          <div 
+            className="dropdown-backdrop"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(false);
+            }}
+          />
+          <div 
+            ref={dropdownRef}
+            className="team-options" 
+            role="listbox"
+            onKeyDown={handleKeyDown}
+            onMouseDown={(e) => {
+              // Prevent dropdown from disappearing when clicking options
+              e.preventDefault();
+            }}
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`
+            }}
+          >
+            {teams.map((team) => (
+              <button
+                key={team.value}
+                className={`team-option ${
+                  selectedTeam === team.value ? "selected" : ""
+                }`}
+                onClick={(e) => handleTeamChange(team.value, e)}
+                role="option"
+                aria-selected={selectedTeam === team.value}
+              >
+                <span className="team-emoji">{team.emoji}</span>
+                <span className="team-name">{team.label}</span>
+                {selectedTeam === team.value && (
+                  <span className="checkmark">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <style jsx>{`
+        .dropdown-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 9998;
+          background: transparent;
+          cursor: default;
+        }
+
         .team-selector {
           display: flex;
           align-items: center;
           gap: 8px;
           position: relative;
+          z-index: 1000;
         }
 
         .team-selector-label {
@@ -171,19 +269,19 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
         }
 
         .team-options {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          margin-top: 4px;
+          position: fixed;
           background: var(--color-bg-primary);
           border: 2px solid var(--color-border);
           border-radius: 12px;
           box-shadow: 0 8px 24px rgba(65, 108, 109, 0.15);
-          z-index: 9999;
+          z-index: 10000;
           overflow: hidden;
           backdrop-filter: blur(10px);
           animation: dropdownFade 0.2s ease-out;
+          min-width: 140px;
+          max-height: 200px;
+          overflow-y: auto;
+          pointer-events: auto;
         }
 
         .team-option {
@@ -200,6 +298,9 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
           transition: all 0.15s ease;
           width: 100%;
           text-align: left;
+          position: relative;
+          z-index: 10001;
+          pointer-events: auto;
         }
 
         .team-option:hover {
@@ -226,15 +327,6 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
         .checkmark {
           font-weight: bold;
           color: var(--color-text-light);
-        }
-
-        .dropdown-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 9998;
         }
 
         @keyframes dropdownFade {
