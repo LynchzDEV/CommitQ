@@ -1,0 +1,34 @@
+# Cloudflare Tunnel Configuration
+# This file shows the tunnel configuration structure
+# Actual deployment uses token-based authentication via environment variable
+
+tunnel: your-tunnel-id-here
+credentials-file: /etc/cloudflared/credentials.json
+
+# Ingress rules - routes traffic to your application
+ingress:
+  # Route your domain to the nginx container
+  - hostname: your-domain.com
+    service: http://nginx:80
+    
+  # Optional: Route a subdomain for direct app access (bypassing nginx)
+  # - hostname: app.your-domain.com
+  #   service: http://commitq:3000
+    
+  # Catch-all rule (required)
+  - service: http_status:404
+
+# Optional: Enable metrics
+metrics: 0.0.0.0:2000
+
+# Optional: Enable warp routing for private networks
+# warp-routing:
+#   enabled: true
+
+# Optional: Logging configuration
+loglevel: info
+
+# Optional: Additional settings
+retries: 3
+heartbeat-interval: 30s
+grace-period: 30s

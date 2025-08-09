@@ -1,0 +1,31 @@
+# Cloudflare Tunnel optimized overrides for docker-compose.yml
+# Usage: docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d
+
+services:
+  nginx:
+    # Remove exposed ports since Cloudflare Tunnel connects internally
+    ports: []
+    
+    # Use cloudflare-optimized nginx config
+    volumes:
+      - ./nginx.cloudflare.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    
+    # Environment for nginx to know it's behind Cloudflare
+    environment:
+      - CLOUDFLARE_TUNNEL=true
+
+  # Cloudflare Tunnel service
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: commitq-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - commitq-network
+    depends_on:
+      nginx:
+        condition: service_healthy
+    # No ports exposed - tunnel connects internally
