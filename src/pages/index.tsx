@@ -20,7 +20,12 @@ export default function Home() {
 
   // Team display names
   const getTeamDisplayName = (team: Team) => {
-    return team === "bma-training" ? "BMA Training" : "Caffeine";
+    switch (team) {
+      case "bma-training": return "BMA Training";
+      case "caffeine": return "Caffeine";
+      case "tmlt": return "TMLT";
+      default: return "BMA Training";
+    }
   };
 
   return (
@@ -76,7 +81,9 @@ export default function Home() {
 
           {queueState.items.length === 0 ? (
             <div className="empty-queue fade-in">
-              <div className="empty-icon">{currentTeam === "bma-training" ? "🎓" : "☕"}</div>
+              <div className="empty-icon">
+                {currentTeam === "bma-training" ? "🎓" : currentTeam === "caffeine" ? "☕" : "🚀"}
+              </div>
               <h3 className="empty-title">No items in {getTeamDisplayName(currentTeam)} queue</h3>
               <p className="empty-description">
                 Add your name above to join the {getTeamDisplayName(currentTeam)} queue

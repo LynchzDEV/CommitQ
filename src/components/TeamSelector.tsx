@@ -5,7 +5,7 @@ export interface TeamSelectorProps {
   className?: string;
 }
 
-export type Team = "bma-training" | "caffeine";
+export type Team = "bma-training" | "caffeine" | "tmlt";
 
 export const TeamSelector: React.FC<TeamSelectorProps> = ({
   onTeamChange,
@@ -20,6 +20,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
   const teams: { value: Team; label: string; emoji: string }[] = [
     { value: "bma-training", label: "BMA Training", emoji: "🎓" },
     { value: "caffeine", label: "Caffeine", emoji: "☕" },
+    { value: "tmlt", label: "TMLT", emoji: "🚀" },
   ];
 
   // Load team from localStorage on component mount
@@ -396,7 +397,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
 export const getCurrentTeam = (): Team => {
   if (typeof window === "undefined") return "bma-training";
   const savedTeam = localStorage.getItem("commitq-selected-team") as Team;
-  return savedTeam && ["bma-training", "caffeine"].includes(savedTeam) 
+  return savedTeam && ["bma-training", "caffeine", "tmlt"].includes(savedTeam) 
     ? savedTeam 
     : "bma-training";
 };

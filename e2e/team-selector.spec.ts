@@ -41,12 +41,14 @@ test.describe('Team Selector E2E Tests', () => {
     await expect(teamOptions).toBeVisible();
     await expect(dropdownArrow).toHaveClass(/open/);
 
-    // Verify dropdown contains both teams
+    // Verify dropdown contains all three teams
     const bmaOption = page.locator('.team-option', { hasText: 'BMA Training' });
     const caffeineOption = page.locator('.team-option', { hasText: 'Caffeine' });
+    const tmltOption = page.locator('.team-option', { hasText: 'TMLT' });
     
     await expect(bmaOption).toBeVisible();
     await expect(caffeineOption).toBeVisible();
+    await expect(tmltOption).toBeVisible();
 
     // Verify BMA Training is marked as selected
     await expect(bmaOption).toHaveClass(/selected/);
@@ -86,6 +88,26 @@ test.describe('Team Selector E2E Tests', () => {
     await expect(teamButton.locator('.team-emoji')).toContainText('🎓');
   });
 
+  test('can switch to TMLT team', async ({ page }) => {
+    await page.goto('/');
+
+    const teamButton = page.locator('.team-button');
+    
+    // Open dropdown and switch to TMLT team
+    await teamButton.click();
+    
+    const tmltOption = page.locator('.team-option', { hasText: 'TMLT' });
+    await tmltOption.click();
+
+    // Verify UI updates to show TMLT team
+    await expect(teamButton).toContainText('TMLT');
+    await expect(teamButton.locator('.team-emoji')).toContainText('🚀');
+    
+    // Verify dropdown closes after selection
+    const teamOptions = page.locator('.team-options');
+    await expect(teamOptions).toBeHidden();
+  });
+
   test('team selection persists in localStorage', async ({ page }) => {
     await page.goto('/');
 
@@ -104,6 +126,26 @@ test.describe('Team Selector E2E Tests', () => {
     const teamButton = page.locator('.team-button');
     await expect(teamButton).toContainText('Caffeine');
     await expect(teamButton.locator('.team-emoji')).toContainText('☕');
+  });
+
+  test('TMLT team selection persists in localStorage', async ({ page }) => {
+    await page.goto('/');
+
+    // Switch to TMLT team
+    await page.locator('.team-button').click();
+    await page.locator('.team-option', { hasText: 'TMLT' }).click();
+
+    // Check localStorage value
+    const storedTeam = await page.evaluate(() => 
+      localStorage.getItem('commitq-selected-team')
+    );
+    expect(storedTeam).toBe('tmlt');
+
+    // Reload page and verify team persists
+    await page.reload();
+    const teamButton = page.locator('.team-button');
+    await expect(teamButton).toContainText('TMLT');
+    await expect(teamButton.locator('.team-emoji')).toContainText('🚀');
   });
 
   test('queue page title updates when switching teams', async ({ page }) => {
