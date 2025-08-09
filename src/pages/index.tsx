@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Head from "next/head";
 import { useSocket } from "@/hooks/useSocket";
 import { Header } from "@/components/Header";
 import { AddQueueForm } from "@/components/AddQueueForm";
@@ -23,8 +24,34 @@ export default function Home() {
   };
 
   return (
-    <div className="app-container">
-      <Header isConnected={isConnected} error={error} />
+    <>
+      <Head>
+        <title>Queue Management - {getTeamDisplayName(currentTeam)} | CommitQ</title>
+        <meta 
+          name="description" 
+          content={`Join the ${getTeamDisplayName(currentTeam)} queue for efficient team collaboration and workflow management. Real-time updates with ${queueState.items.length} items currently in queue.`} 
+        />
+        <meta 
+          name="keywords" 
+          content={`${currentTeam} queue, team queue management, ${getTeamDisplayName(currentTeam)} workflow, real-time collaboration, task coordination`} 
+        />
+        <meta property="og:title" content={`${getTeamDisplayName(currentTeam)} Queue Management | CommitQ`} />
+        <meta 
+          property="og:description" 
+          content={`Join the ${getTeamDisplayName(currentTeam)} queue for efficient team collaboration. Currently ${queueState.items.length} items in queue with real-time updates.`} 
+        />
+        <meta property="og:url" content="https://commitq.app/" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:title" content={`${getTeamDisplayName(currentTeam)} Queue Management | CommitQ`} />
+        <meta 
+          name="twitter:description" 
+          content={`Real-time queue management for ${getTeamDisplayName(currentTeam)}. ${queueState.items.length} items currently in queue.`} 
+        />
+        <link rel="canonical" href="https://commitq.app/" />
+      </Head>
+      
+      <div className="app-container">
+        <Header isConnected={isConnected} error={error} />
 
       <div className="main-content">
         <AddQueueForm onAddToQueue={addToQueue} />
@@ -239,6 +266,7 @@ export default function Home() {
           }
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }

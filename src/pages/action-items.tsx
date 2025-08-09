@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Head from "next/head";
 import { useActionItems } from "@/hooks/useActionItems";
 import { Header } from "@/components/Header";
 import { AddActionItemForm } from "@/components/AddActionItemForm";
@@ -32,8 +33,34 @@ export default function ActionItems() {
   };
 
   return (
-    <div className="app-container">
-      <Header isConnected={isConnected} error={error} />
+    <>
+      <Head>
+        <title>Action Items & Tasks - {getTeamDisplayName(currentTeam)} | CommitQ</title>
+        <meta 
+          name="description" 
+          content={`Manage ${getTeamDisplayName(currentTeam)} action items and tasks with real-time collaboration. Track ${pendingItems.length} pending and ${completedItems.length} completed tasks efficiently.`} 
+        />
+        <meta 
+          name="keywords" 
+          content={`${currentTeam} action items, task management, ${getTeamDisplayName(currentTeam)} tasks, team productivity, task tracking, action item list`} 
+        />
+        <meta property="og:title" content={`${getTeamDisplayName(currentTeam)} Action Items & Task Management | CommitQ`} />
+        <meta 
+          property="og:description" 
+          content={`Efficiently manage ${getTeamDisplayName(currentTeam)} action items and tasks. ${pendingItems.length} pending tasks, ${completedItems.length} completed with real-time updates.`} 
+        />
+        <meta property="og:url" content="https://commitq.app/action-items" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:title" content={`${getTeamDisplayName(currentTeam)} Action Items | CommitQ`} />
+        <meta 
+          name="twitter:description" 
+          content={`Task management for ${getTeamDisplayName(currentTeam)}. ${pendingItems.length} pending, ${completedItems.length} completed tasks.`} 
+        />
+        <link rel="canonical" href="https://commitq.app/action-items" />
+      </Head>
+      
+      <div className="app-container">
+        <Header isConnected={isConnected} error={error} />
 
       <div className="main-content">
         <AddActionItemForm onAddActionItem={addActionItem} />
@@ -315,6 +342,7 @@ export default function ActionItems() {
           }
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }

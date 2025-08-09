@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://commitq.app/sitemap.xml
+
+# Block potentially sensitive areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/

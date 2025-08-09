@@ -1,7 +1,7 @@
 services:
   # CommitQ Application
   commitq:
-    image: lynchz/commitq-app:latest
+    image: ghcr.io/lynchzdev/commitq-app:latest
     container_name: commitq-app
     restart: unless-stopped
     environment:
